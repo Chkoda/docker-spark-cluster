@@ -1,7 +1,7 @@
 FROM openjdk:11.0.11-jre-slim-buster as builder
 
 # Add Dependencies for PySpark
-RUN apt-get update && apt-get install -y curl vim wget software-properties-common ssh net-tools ca-certificates python3 python3-pip python3-numpy python3-matplotlib python3-scipy python3-pandas python3-simpy rsync
+RUN apt-get update && apt-get install -y curl vim wget software-properties-common ssh net-tools ca-certificates python3 python3-pip python3-numpy python3-matplotlib python3-scipy python3-pandas python3-simpy
 
 RUN update-alternatives --install "/usr/bin/python" "python" "$(which python3)" 1
 
@@ -25,29 +25,15 @@ WORKDIR /opt/spark
 ENV SPARK_MASTER_PORT=7077 \
 SPARK_MASTER_WEBUI_PORT=8080 \
 SPARK_LOG_DIR=/opt/spark/logs \
-SPARK_MASTER_LOG=/opt/spark/logs/spark-master.out \
-SPARK_WORKER_LOG=/opt/spark/logs/spark-worker.out \
 SPARK_WORKER_WEBUI_PORT=8080 \
-SPARK_WORKER_PORT=7000 \
-SPARK_MASTER="spark://spark-master:7077" \
-SPARK_WORKLOAD="master"
+SPARK_WORKER_PORT=7000
 
-EXPOSE 8080 7077 7000 22 10015
+EXPOSE 8080 4040 7077 7000 10015
 
 RUN mkdir -p $SPARK_LOG_DIR && \
-touch $SPARK_MASTER_LOG && \
-touch $SPARK_WORKER_LOG && \
-ln -sf /dev/stdout $SPARK_MASTER_LOG && \
-ln -sf /dev/stdout $SPARK_WORKER_LOG
-
-# Enable SSH
-RUN echo 'root:Docker!' | chpasswd
-RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 test
-RUN echo 'test:test' | chpasswd
-RUN service ssh start
+touch $SPARK_LOG_DIR/$SPARK_LOCAL_IP.out && \
+ln -sf /dev/stdout $SPARK_LOG_DIR/$SPARK_LOCAL_IP.out
 
 COPY start-spark.sh /
-
-RUN /opt/spark/sbin/start-thriftserver.sh --executor-memory 512m --hiveconf hive.server2.thrift.port=10015
 
 CMD ["/bin/bash", "/start-spark.sh"]
