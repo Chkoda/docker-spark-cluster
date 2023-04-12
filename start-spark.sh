@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cp /drivers/* /opt/spark/jars/
+find /drivers -name "*.jar" -type f -exec cp {} /opt/spark/jars \;
 
 . "/opt/spark/bin/load-spark-env.sh"
 
